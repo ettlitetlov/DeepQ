@@ -1,0 +1,25 @@
+{
+  "name": "deepq",
+  "version": "1.0.0",
+  "description": "Experimental project, which aim is to learn the properties of deep q-learning",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ettlitetlov/DeepQ.git"
+  },
+  "author": "Axel Kollberg",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ettlitetlov/DeepQ/issues"
+  },
+  "homepage": "https://github.com/ettlitetlov/DeepQ#readme",
+  "keywords": [],
+  "dependencies": {
+    "convnetjs": "^0.3.0",
+    "express": "^4.16.3",
+    "synaptic": "^1.1.4"
+  }
+}
