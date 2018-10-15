@@ -1,0 +1,5 @@
+class model{
+
+}
+
+module.exports = model;
