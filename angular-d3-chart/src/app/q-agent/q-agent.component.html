@@ -1,5 +1,20 @@
 <div>
-  TensorFlow says {{ prediction }}
+  <div>
+      <mat-list>
+          <h3 mat-subheader>Agent Stats</h3>
+        <mat-list-item>
+            Agent is currently: {{ action }}
+        </mat-list-item>
+        <mat-divider></mat-divider>
+        <mat-list-item>
+            Number of stocks: {{ currentState.noStocks }}
+        </mat-list-item>
+        <mat-divider></mat-divider>
+        <mat-list-item color="blue">
+            Cred balance: ${{ currentState.balance }}
+        </mat-list-item>
+      </mat-list>
+  </div>
 
-  <input type="number" (change)="predict($event.target.value)">
+  <!--<input type="number" (change)="predict($event.target.value)">-->
 </div>

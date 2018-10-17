@@ -1,7 +1,7 @@
-import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 
-import {MarketPrice} from './market-price';
+import { MarketPrice } from './market-price';
 import { Subject, from } from  'rxjs';
 import * as socketio from 'socket.io-client';
 

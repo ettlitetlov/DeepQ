@@ -19,6 +19,11 @@ export  class State {
     this.balance = newBalance;
   }
 
+  //Get Balance
+  getBalance(): number{
+    return this.balance;
+  }
+
   // Set Number of Stocks
   setNoStocks(newStock:number){
       this.noStocks = newStock;
@@ -30,7 +35,7 @@ export  class State {
   }
 
    // Set second derivative
-   setSecondD(newSecondDer: number){
+  setSecondD(newSecondDer: number){
     this.secondDeriv = newSecondDer;
   }
 
