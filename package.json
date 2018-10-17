@@ -17,7 +17,6 @@
   "dependencies": {
     "@tensorflow/tfjs": "^0.13.1",
     "express": "^4.16.3",
-    "google-finance": "^0.1.12",
     "keras-js": "^1.0.3",
     "moment": "^2.22.2",
     "socket.io": "^2.1.1"

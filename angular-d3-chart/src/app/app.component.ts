@@ -2,6 +2,7 @@ import {Component} from '@angular/core';
 import {MarketStatusService} from './market-status.service';
 import {Observable} from 'rxjs';
 import {MarketPrice} from './market-price';
+import { QAgentComponent } from './q-agent/q-agent.component';
 
 @Component({
   selector: 'app-root',
