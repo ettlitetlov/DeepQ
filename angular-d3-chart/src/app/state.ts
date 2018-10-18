@@ -1,15 +1,15 @@
 export  class State {
   firstDeriv: number;
   secondDeriv: number;
-  thirdDeriv: number;
+  price: number;
   noStocks: number;
   balance: number;
 
   //Constructor
-  constructor(first:number,second:number,third:number,noStocks:number,balance:number){
+  constructor(first:number,second:number,price:number,noStocks:number,balance:number){
     this.firstDeriv = first;
     this.secondDeriv = second;
-    this.thirdDeriv = third;
+    this.price = price;
     this.noStocks = noStocks;
     this.balance = balance;
   }
@@ -39,9 +39,9 @@ export  class State {
     this.secondDeriv = newSecondDer;
   }
 
-   // Set third derivative
-   setThirdD(newThirdDer: number){
-    this.thirdDeriv = newThirdDer;
+   // Set price
+   setThirdD(price: number){
+    this.price = price;
   }
 
 }
