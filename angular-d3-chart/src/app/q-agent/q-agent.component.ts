@@ -26,11 +26,12 @@ export class QAgentComponent implements OnChanges {
   lastTwoVals: number[] = [0,0];
   actionList:string[] = ["Buying","Selling","Holding"];
   inTraining:boolean = false;
+  buyPrice:number = 0;
 
   // How much do we want to discount future rewards?
   gamma:number = 0.95;
   epsilon:number = 1.0;
-  epsilonDecay:number = 0.99;
+  epsilonDecay:number = 0.995;
   epsilonMin:number = 0.03;
   episodes:number = 32;
   readonly batchSize:number = 32;
@@ -50,12 +51,12 @@ export class QAgentComponent implements OnChanges {
     this.networkModel.add(tf.layers.dense({units: 32, inputShape: [5], activation: 'relu'}));
     this.networkModel.add(tf.layers.dense({units: 32, activation: 'relu'}));
     this.networkModel.add(tf.layers.dense({units: 3, activation: 'linear'}));
-    this.networkModel.compile({loss: 'meanSquaredError', optimizer: tf.train.adam(0.06)})
+    this.networkModel.compile({loss: 'sequence_loss_by_example', optimizer: tf.train.adam(0.06)})
   }
 
   ngOnChanges() {
 
-    if(this.currentState && this.currentState.balance > 15000){
+    if(this.currentState && this.currentState.balance > 25000){
       this.action = "I Won!!";
     }
     else{
@@ -81,7 +82,7 @@ export class QAgentComponent implements OnChanges {
 
   // Save state -> Actions pairs in memory
   remember(currentState:State, action:number, reward:number, nextState:State, done:boolean){
-    if(this.memory.length < 1000){
+    if(this.memory.length < 500){
       this.memory.push(new Memory(currentState,action,reward,nextState,done));
     }
     else{
@@ -120,20 +121,23 @@ export class QAgentComponent implements OnChanges {
     for(var i = 0; i < this.batchSize; i++){
       states.push(this.memory[miniBatch[i]].state);
       actionList.push(this.memory[miniBatch[i]].action);
+      let emptyList:number[] = [0,0,0];
       if(this.memory[miniBatch[i]].done){
         let target:number[] = [];
-        target.push(this.memory[miniBatch[i]].reward);
-        target.push(this.memory[miniBatch[i]].reward);
-        target.push(this.memory[miniBatch[i]].reward);
+        emptyList[this.memory[miniBatch[i]].action] = 1;
+        target.push(this.memory[miniBatch[i]].reward * emptyList[0] +1);
+        target.push(this.memory[miniBatch[i]].reward * emptyList[1] +1);
+        target.push(this.memory[miniBatch[i]].reward * emptyList[2] +1);
         targetList[i] = (new Array(target[2],target[1],target[0]));
       }
       else{
         const predict = this.networkModel.predict(tf.tensor2d([this.memory[miniBatch[i]].nextState.firstDeriv, this.memory[miniBatch[i]].nextState.secondDeriv, this.memory[miniBatch[i]].nextState.price, this.memory[miniBatch[i]].nextState.noStocks, this.memory[miniBatch[i]].nextState.balance], [1,5]))as any;
         let res:any = Array.from(predict.dataSync());
         let target:number[] = [];
-        target.push(this.memory[miniBatch[i]].reward + this.gamma * res[0]);
-        target.push(this.memory[miniBatch[i]].reward + this.gamma * res[1]);
-        target.push(this.memory[miniBatch[i]].reward + this.gamma * res[2]);
+        emptyList[this.memory[miniBatch[i]].action] = 1;
+        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[0]) * emptyList[0] +1);
+        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[1]) * emptyList[1] +1);
+        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[2]) * emptyList[2] +1);
         targetList[i] = (new Array(target[2],target[1],target[0]));
       }
     }
@@ -151,7 +155,6 @@ export class QAgentComponent implements OnChanges {
   } */
 
   async trainNetwork(states:State[], prediction:number[]){
-    console.log(prediction);
     const testingData = tf.tensor2d(states.map(item =>[
       item.firstDeriv,item.secondDeriv,item.price,item.noStocks,item.balance
     ]))
@@ -200,6 +203,7 @@ export class QAgentComponent implements OnChanges {
   // Reset the environment
   envReset(){
     this.currentState = new State(0,0,0,0,1500);
+    this.buyPrice = 0;
   }
 
   // Step forward in the environment with the decided action
@@ -211,31 +215,29 @@ export class QAgentComponent implements OnChanges {
     // Keep the values up to time, so we can compute derivatives
     this.lastTwoVals.pop();
     this.lastTwoVals.unshift(this.marketStatus[0].open);
-
-    // What was the agents net worth in previous step?
-    let prevVal:number = this.envGetFortune(this.marketStatus[1]);
-    
+   
     this.envCurrentStep += 1;
     // The immediate reward is the difference between the agents net worth in previous step and the upcoming
-    let reward:number = this.envGetFortune(this.marketStatus[0]) - prevVal;
-
-    if(action == 2){
-      reward = 0;
-    }
-    if(action == 1 && this.currentState.balance == 0){
-      reward = 0;
-    }
+    let reward:number = 0;
 
     let oldState:State = new State(this.currentState.firstDeriv,this.currentState.secondDeriv,this.currentState.price,this.currentState.noStocks, this.currentState.balance);
     this.envTrade(action);
 
-    if(action == 0 && oldState.noStocks == this.currentState.noStocks){
-      reward = 0;
-    }
     this.currentState.price = parseFloat(this.marketStatus[0].open.toFixed(2));
     let done = this.envCurrentStep == this.episodes -1;
 
     let newState:State = new State(this.currentState.price - this.lastTwoVals[0],this.currentState.price - this.lastTwoVals[1],this.currentState.price,this.currentState.noStocks, this.currentState.balance);
+    
+    if(action == 1 && newState.noStocks < oldState.noStocks){
+      reward = newState.balance - this.buyPrice;
+    }
+
+    if(action == 0){
+      reward = this.envGetFortune(this.marketStatus[0]) - this.envGetFortune(this.marketStatus[1]);
+      if(oldState.noStocks < newState.noStocks){
+        this.buyPrice = this.envGetFortune(this.marketStatus[0]);
+      }
+    }
 
     this.remember(oldState,action,reward,newState,done);
   }
