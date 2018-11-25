@@ -118,6 +118,8 @@ export class QAgentComponent implements OnChanges {
     let states:State[] = [];
     let actionList:number[] = [];
 
+   
+
     for(var i = 0; i < this.batchSize; i++){
       states.push(this.memory[miniBatch[i]].state);
       actionList.push(this.memory[miniBatch[i]].action);
@@ -125,9 +127,9 @@ export class QAgentComponent implements OnChanges {
       if(this.memory[miniBatch[i]].done){
         let target:number[] = [];
         emptyList[this.memory[miniBatch[i]].action] = 1;
-        target.push(this.memory[miniBatch[i]].reward * emptyList[0] +1);
-        target.push(this.memory[miniBatch[i]].reward * emptyList[1] +1);
-        target.push(this.memory[miniBatch[i]].reward * emptyList[2] +1);
+        target.push(this.memory[miniBatch[i]].reward * emptyList[0]);
+        target.push(this.memory[miniBatch[i]].reward * emptyList[1]);
+        target.push(this.memory[miniBatch[i]].reward * emptyList[2]);
         targetList[i] = (new Array(target[2],target[1],target[0]));
       }
       else{
@@ -135,9 +137,9 @@ export class QAgentComponent implements OnChanges {
         let res:any = Array.from(predict.dataSync());
         let target:number[] = [];
         emptyList[this.memory[miniBatch[i]].action] = 1;
-        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[0]) * emptyList[0] +1);
-        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[1]) * emptyList[1] +1);
-        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[2]) * emptyList[2] +1);
+        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[0]) * emptyList[0]);
+        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[1]) * emptyList[1]);
+        target.push((this.memory[miniBatch[i]].reward + this.gamma * res[2]) * emptyList[2]);
         targetList[i] = (new Array(target[2],target[1],target[0]));
       }
     }
@@ -239,6 +241,14 @@ export class QAgentComponent implements OnChanges {
       }
     }
 
+    if(action == 1){
+      if(oldState.noStocks == 0)
+        reward = 0;
+      else{
+        reward = newState.balance - oldState.balance;
+      }
+    }
+
     this.remember(oldState,action,reward,newState,done);
   }
 
@@ -246,4 +256,5 @@ export class QAgentComponent implements OnChanges {
   envGetFortune(timeStep: MarketPrice): number {
     return (timeStep.open * this.currentState.noStocks) + this.currentState.balance;
   }
+
 }
