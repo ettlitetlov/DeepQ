@@ -6,7 +6,7 @@ import { AppComponent } from './app.component';
 import { MarketChartComponent } from './market-chart/market-chart.component';
 import { QAgentComponent } from './q-agent/q-agent.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MatListModule } from '@angular/material';
+import { MatListModule, MatButtonModule } from '@angular/material';
 
 @NgModule({
   declarations: [
@@ -19,7 +19,8 @@ import { MatListModule } from '@angular/material';
     BrowserModule,
     HttpClientModule,
     BrowserAnimationsModule,
-    MatListModule
+    MatListModule,
+    MatButtonModule
   ],
   providers: [QAgentComponent],
   bootstrap: [AppComponent]

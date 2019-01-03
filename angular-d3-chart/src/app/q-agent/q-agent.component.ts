@@ -26,11 +26,12 @@ export class QAgentComponent implements OnChanges {
   lastTwoVals: number[] = [0,0];
   actionList:string[] = ["Buying","Selling","Holding"];
   inTraining:boolean = false;
+  buyPrice:number = 0;
 
   // How much do we want to discount future rewards?
   gamma:number = 0.95;
   epsilon:number = 1.0;
-  epsilonDecay:number = 0.99;
+  epsilonDecay:number = 0.995;
   epsilonMin:number = 0.03;
   episodes:number = 32;
   readonly batchSize:number = 32;
@@ -55,7 +56,7 @@ export class QAgentComponent implements OnChanges {
 
   ngOnChanges() {
 
-    if(this.currentState && this.currentState.balance > 20000){
+    if(this.currentState && this.currentState.balance > 25000){
       this.action = "I Won!!";
     }
     else{
@@ -73,7 +74,6 @@ export class QAgentComponent implements OnChanges {
       }
       if(this.counter % this.batchSize == 0){
         this.envReset();
-        console.log("Resetting environment");
       }
       this.counter++;
     }
@@ -81,7 +81,7 @@ export class QAgentComponent implements OnChanges {
 
   // Save state -> Actions pairs in memory
   remember(currentState:State, action:number, reward:number, nextState:State, done:boolean){
-    if(this.memory.length < 1000){
+    if(this.memory.length < 500){
       this.memory.push(new Memory(currentState,action,reward,nextState,done));
     }
     else{
@@ -103,7 +103,7 @@ export class QAgentComponent implements OnChanges {
           option = i+1;
         }
       }
-      console.log(res);
+      //console.log(res);
       return option;
     }
     return Math.floor(Math.random() * Math.floor(3));
@@ -116,8 +116,6 @@ export class QAgentComponent implements OnChanges {
     let targetList:any[] = new Array(32);
     let states:State[] = [];
     let actionList:number[] = [];
-
-   
 
     for(var i = 0; i < this.batchSize; i++){
       states.push(this.memory[miniBatch[i]].state);
@@ -156,7 +154,6 @@ export class QAgentComponent implements OnChanges {
   } */
 
   async trainNetwork(states:State[], prediction:number[]){
-
     const testingData = tf.tensor2d(states.map(item =>[
       item.firstDeriv,item.secondDeriv,item.price,item.noStocks,item.balance
     ]))
@@ -205,6 +202,8 @@ export class QAgentComponent implements OnChanges {
   // Reset the environment
   envReset(){
     this.currentState = new State(0,0,0,0,1500);
+    this.buyPrice = 0;
+    console.log("Reset environment")
   }
 
   // Step forward in the environment with the decided action
@@ -216,17 +215,10 @@ export class QAgentComponent implements OnChanges {
     // Keep the values up to time, so we can compute derivatives
     this.lastTwoVals.pop();
     this.lastTwoVals.unshift(this.marketStatus[0].open);
-
-    // What was the agents net worth in previous step?
-    let prevVal:number = this.envGetFortune(this.marketStatus[1]);
-    
+   
     this.envCurrentStep += 1;
     // The immediate reward is the difference between the agents net worth in previous step and the upcoming
-    let reward:number = this.envGetFortune(this.marketStatus[0]) - prevVal;
-
-    if(action == 2){
-      reward = 0;
-    }
+    let reward:number = -10;
 
     let oldState:State = new State(this.currentState.firstDeriv,this.currentState.secondDeriv,this.currentState.price,this.currentState.noStocks, this.currentState.balance);
     this.envTrade(action);
@@ -235,14 +227,24 @@ export class QAgentComponent implements OnChanges {
     let done = this.envCurrentStep == this.episodes -1;
 
     let newState:State = new State(this.currentState.price - this.lastTwoVals[0],this.currentState.price - this.lastTwoVals[1],this.currentState.price,this.currentState.noStocks, this.currentState.balance);
+    
+    if(action == 1 && newState.noStocks < oldState.noStocks){
+      reward = newState.balance - this.buyPrice;
+    }
 
-    if(action == 1){
-      if(oldState.noStocks == 0)
-        reward = 0;
-      else{
-        reward = newState.balance - oldState.balance;
+    if(action == 0){
+      reward = this.envGetFortune(this.marketStatus[0]) - this.envGetFortune(this.marketStatus[1]);
+      if(oldState.noStocks < newState.noStocks){
+        this.buyPrice = this.envGetFortune(this.marketStatus[0]);
       }
     }
+
+    if(action == 1 && oldState.noStocks == 0){
+        reward = -100;
+    }
+
+
+
 
     this.remember(oldState,action,reward,newState,done);
   }
