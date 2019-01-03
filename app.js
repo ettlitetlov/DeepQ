@@ -22,7 +22,11 @@ app.get('/api/market', (req, res) => {
 setInterval(function () {
     market.updateMarket();
     io.sockets.emit('market', market.marketPositions[0]);
+<<<<<<< HEAD
   }, 100);
+=======
+  }, 10);
+>>>>>>> 87ca625c4d6e8127e4419a8344d555fedd959702
   
   io.on('connection', function (socket) {
     console.log('a user connected');
