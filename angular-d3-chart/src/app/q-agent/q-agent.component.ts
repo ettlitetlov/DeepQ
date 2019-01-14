@@ -51,7 +51,7 @@ export class QAgentComponent implements OnChanges {
     this.networkModel.add(tf.layers.dense({units: 32, inputShape: [5], activation: 'relu'}));
     this.networkModel.add(tf.layers.dense({units: 32, activation: 'relu'}));
     this.networkModel.add(tf.layers.dense({units: 3, activation: 'linear'}));
-    this.networkModel.compile({loss: 'sequence_loss_by_example', optimizer: tf.train.adam(0.06)})
+    this.networkModel.compile({loss: 'meanSquaredError', optimizer: tf.train.adam(0.06)})
   }
 
   ngOnChanges() {
