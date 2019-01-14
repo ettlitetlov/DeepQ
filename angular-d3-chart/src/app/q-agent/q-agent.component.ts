@@ -68,7 +68,7 @@ export class QAgentComponent implements OnChanges {
       }
 
       // Train network if possible
-      if(this.memory.length > this.batchSize && (this.counter % 10 == 0) && !this.inTraining){
+      if(this.memory.length > this.batchSize && (this.counter % 100 == 0) && !this.inTraining){
         this.inTraining = true;
         this.replay();
       }
