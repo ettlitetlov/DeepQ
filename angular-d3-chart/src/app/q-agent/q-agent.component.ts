@@ -27,6 +27,7 @@ export class QAgentComponent implements OnChanges {
   actionList:string[] = ["Buying","Selling","Holding"];
   inTraining:boolean = false;
   buyPrice:number = 0;
+  randomness: number;
 
   // How much do we want to discount future rewards?
   gamma:number = 0.95;
@@ -70,7 +71,7 @@ export class QAgentComponent implements OnChanges {
       // Train network if possible
       if(this.memory.length > this.batchSize && (this.counter % 100 == 0) && !this.inTraining){
         this.inTraining = true;
-        this.replay();
+        this.replay(this.memory.length);
       }
       if(this.counter % this.batchSize == 0){
         this.envReset();
@@ -81,7 +82,7 @@ export class QAgentComponent implements OnChanges {
 
   // Save state -> Actions pairs in memory
   remember(currentState:State, action:number, reward:number, nextState:State, done:boolean){
-    if(this.memory.length < 500){
+    if(this.memory.length < 200){
       this.memory.push(new Memory(currentState,action,reward,nextState,done));
     }
     else{
@@ -92,7 +93,7 @@ export class QAgentComponent implements OnChanges {
 
   // Selecting an action 
   act() : number {
-
+    	this.randomness = Math.round(this.epsilon * 100);
     if(Math.random() > this.epsilon)
     {
       const data = this.networkModel.predict(tf.tensor2d([this.currentState.firstDeriv, this.currentState.secondDeriv, this.currentState.price, this.currentState.noStocks, this.currentState.balance], [1,5]))as any
@@ -145,7 +146,6 @@ export class QAgentComponent implements OnChanges {
     if(this.epsilon > this.epsilonMin)
       this.epsilon *= this.epsilonDecay;
 
-    console.log("Decreasing epsilon:" + this.epsilon);
   }
 
  /* predict(val: number) {
@@ -162,7 +162,6 @@ export class QAgentComponent implements OnChanges {
 
     await this.networkModel.fit(testingData,outputData, {epochs: 1, verbose: 0});
 
-    console.log("Network Slighly trained");
     this.inTraining = false;
   }
 
@@ -203,7 +202,6 @@ export class QAgentComponent implements OnChanges {
   envReset(){
     this.currentState = new State(0,0,0,0,1500);
     this.buyPrice = 0;
-    console.log("Reset environment")
   }
 
   // Step forward in the environment with the decided action
